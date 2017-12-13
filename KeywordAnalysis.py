@@ -7,25 +7,32 @@ class KeywordAnalysis:
     def __init__(self):
         """
         构造函数
-        :return:
         """
-        self.testset_path = "FinallyTestTerm/"  # "testTerms2/"
-        self.trainset_path = "TrainingTerms2/"  # 训练集路径
-        self.test_answer_path = "trainSet.txt"  # 测试集结果路径
-        self.idf_path = "IDF.txt"
-        # self.filenames = self.get_filenames(self.testset_path)
+        self.testset_path = "Data/TrainingTerms2/" # 测试集路径
+        self.trainset_path = "Data/TrainingTerms2/"  # 训练集路径
+        self.test_answer_path = "Data/TrainingSet.txt"  # 测试集结果路径
+        self.idf_path = "Data/idf.txt"
+        self.wordDict_path = "Data/wordDict2.txt"  # 已标注的词典
+        self.stopword_path = "Data/Stopword.txt"  # 停用词路径
+        self.tag_path = "Data/tag.txt"  # 特殊符号路径
+        self.Symbol = ["。", "?", "？", "!", "！"]
+        self.filenames = self.get_filenames(self.testset_path)
         self.training_filenames = self.get_filenames(self.trainset_path)
         self.Stopwords = self.get_stop_word()  # 读取停用词
 
-        self.Symbol = ["。", "?", "？", "!", "！"]
         self.tags = self.load_tag()  # 读取待过滤符号集
         # for i in self.Stopwords:
         #     print i
         # self.weight = [0.4086, 0.3586, 0.3507, 0.2068, 0.0899, 0.0819, 0.0410, 0.0132, 0.0261, 0.0521, 0.0250, 0.0372]
+
+       # 根据训练集训练的位置特征
         self.weight = [0.6391389432485323, 0.4042074363992172, 0.35861579414374443, 0.29405940594059404,
                        0.09207920792079208, 0.09465478841870824, 0.11206896551724138, 0.05387931034482758,
                        0.07247008973080758, 0.11839105417435675, 0.049397459559222666, 0.052891405094903025]
+
         self.idf_dict = self.load_idf() #　读取ｉｄｆ权值
+
+        # 根据训练集训练的词性特征
         self.pos_weight = {'gp': 0.06832298136645963, 'gg': 0.0425531914893617,
                                'gc': 0.07142857142857142, 'gb': 0.016666666666666666,
                                'gm': 0.013333333333333334, 'gi': 0.15455128616332028,
@@ -69,23 +76,12 @@ class KeywordAnalysis:
                                'e': 0.030303030303030304, 'i': 0.01639344262295082,
                                'm': 0.0012547051442910915, 'q': 0.00020990764063811922,
                                'u': 0.006535947712418301, 'y': 0.0013513513513513514,
-                               'rzs': 0.0015923566878980893, 'uguo': 0.0030959752321981426} # 根据训练集，获取词性特征
+                               'rzs': 0.0015923566878980893, 'uguo': 0.0030959752321981426}
         for pos in self.pos_weight:
             if self.pos_weight[pos]<0.015:
                 self.pos_weight[pos] = 0.015
             if 0.015 < self.pos_weight[pos] < 0.0385:
                 self.pos_weight[pos] = 0.0385
-
-
-       # for pos in self.pos_weight:
-        #     if(pos == "nz"):
-        #         self.pos_weight[pos] = 3.0
-        #     elif(pos == "gi"):
-        #         self.pos_weight[pos] = 3.5
-        #     elif(pos == "w"):
-        #         self.pos_weight[pos] = 3.2
-        #     else:
-        #         self.pos_weight[pos] = 1.0
 
         self.worst_tags = ["”", "“", "　","·","?", "本书", "项目第", "几个", "碎碎"]
         self.wordgroup_dict = self.get_wordgroup_dict()
@@ -199,6 +195,10 @@ class KeywordAnalysis:
         return result
 
     def load_test_answer_path(self):
+        """
+        读取测试集的标注结果
+        :return:
+        """
         f = open(self.test_answer_path, "r")
         rows = f.readlines()
         f.close()
@@ -353,7 +353,7 @@ class KeywordAnalysis:
             # print str(weight[i]/float(num[i]))+",",
 
     def get_stop_word(self):
-        f = open("Stopword.txt","r")
+        f = open(self.stopword_path,"r")
         rows = f.readlines()
         f.close()
         stop_word = {}
@@ -364,7 +364,7 @@ class KeywordAnalysis:
 
     def get_filenames(self,name):
         """
-        获取测试样本，已分词和词性标注
+        获取测试样本（已分词和词性标注)
         :return: 文档名
         """
         filenames = os.listdir(name)
@@ -419,8 +419,8 @@ class KeywordAnalysis:
     def get_word(self, name, folder):
             """
             输入文件名及所在文件夹名，获取ｂｌｏｇ标题与正文的词集合
-            :param name:
-            :param folder:
+            :param name: 文件名
+            :param folder: 所在文件夹名
             :return:
             """
             f=open(folder+name,"r")
@@ -552,8 +552,12 @@ class KeywordAnalysis:
         return pos_probability
 
     def load_tag(self):
+        """
+        读取待过滤的特殊标记
+        :return:
+        """
         tags = []
-        f = open("tag.txt","r")
+        f = open(self.tag_path,"r")
         rows = f.readlines()
 
         for row in rows:
@@ -595,7 +599,7 @@ class KeywordAnalysis:
         return word_freq
 
     def get_wordgroup_dict(self):
-        f = open("wordDict2.txt")
+        f = open(self.wordDict_path)
         rows = f.readlines()
         word_group = []
         for row in rows:
@@ -619,7 +623,7 @@ class KeywordAnalysis:
         return wordgroup_dict
 
     def get_training_keyword(self):
-        f = open("wordDict2.txt")
+        f = open(self.wordDict_path)
         rows = f.readlines()
         keyword_dict = {}
         for row in rows:
@@ -657,11 +661,4 @@ class KeywordAnalysis:
         #     print word
 
 a = KeywordAnalysis()
-
-# print a.pos_weight
-# a.get_more_stopword()
-# a.get_precision()
-# a.load_idf()
-# a.analysis_all()
-# a.load_answer_freq()
-print a.pos_weight.__len__()
+a.get_precision()
